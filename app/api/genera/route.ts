@@ -12,6 +12,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Cliente non selezionato' }, { status: 400 })
     }
 
+    // Normalize model: bare name (no provider prefix) → default
+    const resolvedModel = (model && model.includes('/'))
+      ? model
+      : 'anthropic/claude-sonnet-4-5'
+
     const supabase = await createClient()
 
     // Fetch brand
@@ -45,7 +50,7 @@ export async function POST(req: NextRequest) {
         'X-Title': 'Social Automation',
       },
       body: JSON.stringify({
-        model: model || 'anthropic/claude-sonnet-4-5',
+        model: resolvedModel,
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 1200,
         temperature: 0.8,
