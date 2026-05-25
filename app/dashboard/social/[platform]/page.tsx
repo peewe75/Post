@@ -26,6 +26,7 @@ export default function SocialPlatformPage({ params }: { params: Promise<{ platf
 function PlatformContent({ config }: { config: typeof PLATFORMS[PlatformKey] }) {
   const [recenti, setRecenti] = useState<Contenuto[]>([])
   const [states, setStates]   = useState<Record<string, 'idle' | 'loading' | 'success' | 'error'>>({})
+  const [errMsgs, setErrMsgs] = useState<Record<string, string>>({})
   const [pending, setPending] = useState<FormatoConfig | null>(null)
   const [aiModel, setAiModel] = useState('anthropic/claude-sonnet-4-5')
   const supabase = createClient()
@@ -84,10 +85,12 @@ function PlatformContent({ config }: { config: typeof PLATFORMS[PlatformKey] }) 
         throw new Error(errBody.error ?? `HTTP ${res.status}`)
       }
       setStates(s => ({ ...s, [f.id]: 'success' }))
-    } catch {
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e)
+      setErrMsgs(s => ({ ...s, [f.id]: msg }))
       setStates(s => ({ ...s, [f.id]: 'error' }))
     }
-    setTimeout(() => setStates(s => ({ ...s, [f.id]: 'idle' })), 3500)
+    setTimeout(() => setStates(s => ({ ...s, [f.id]: 'idle' })), 5000)
   }
 
   return (
@@ -160,6 +163,9 @@ function PlatformContent({ config }: { config: typeof PLATFORMS[PlatformKey] }) 
                    st === 'error'   ? 'Errore — riprova' :
                    `Genera ${f.nome.toLowerCase()}`}
                 </button>
+                {st === 'error' && errMsgs[f.id] && (
+                  <p className="text-[11px] text-red-600 mt-1.5 text-center break-words">{errMsgs[f.id]}</p>
+                )}
               </div>
             )
           })}
